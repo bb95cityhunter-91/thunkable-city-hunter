@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	<!-- /index.html?data={"tile":"NO_LABEL_OSM","geoinfo": {"USER":[22.3,114.3], "ITEM_1":[22.2,114.2]}} -->
+    <script>
+        // Function to extract data from URL
+        function getDataFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const data = params.get('data');
+            return data ? JSON.parse(decodeURIComponent(data)) : null;
+        }
+
+        // Initialize the map
+        const map = L.map('map').setView([22.3, 114.3], 12);
+
+        // Set up the tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Icon mapping
+        const iconMap = {
+            "USER": "./image/USER.PNG",
+            "ITEM_1": "./image/ITEM-1.PNG",
+            "ITEM_2": "./image/ITEM-2.PNG",
+            "ITEM_3": "./image/ITEM-3.PNG",
+            "ITEM_4": "./image/ITEM-4.PNG",
+            "ITEM_5": "./image/ITEM-5.PNG"
+        };
+
+        // Function to add markers
+        function addMarkers(data) {
+            for (const [key, coordinates] of Object.entries(data.geoinfo)) {
+                const iconUrl = iconMap[key] || "";
+                if (iconUrl) {
+                    const customIcon = L.icon({
+                        iconUrl: iconUrl,
+                        iconSize: [38, 38] // Adjust size as needed
+                    });
+                    L.marker(coordinates, { icon: customIcon }).addTo(map)
+                      .bindPopup(key);
+                }
+            }
+        }
+
+        // Get data and add markers
+        const data = getDataFromUrl();
+        if (data) {
+            addMarkers(data);
+        }
+    </script>
+</body>
+</html>
