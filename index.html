@@ -12,8 +12,10 @@
 </head>
 <body>
     <div id="map"></div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-	<!-- /index.html?data={"tile":"NO_LABEL_OSM","geoinfo": {"USER":[22.3,114.3], "ITEM_1":[22.2,114.2]}} -->
+    <!-- Data URL example: /index.html?data={"tile":"NO_LABEL_OSM","geoinfo":{"USER":[22.3,114.3],"ITEM_1":[22.2,114.2]}} -->
+    
     <script>
         // Function to extract data from URL
         function getDataFromUrl() {
@@ -25,16 +27,10 @@
         // Initialize the map
         const map = L.map('map').setView([22.3, 114.3], 12);
 
-        // Set up the tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
-
-        // Icon mapping
+        // Define icon mapping
         const iconMap = {
             "USER": "./image/USER.PNG",
-			"KEY": "./image/KEY.PNG",
+            "KEY": "./image/KEY.PNG",
             "ITEM_1": "./image/ITEM-1.PNG",
             "ITEM_2": "./image/ITEM-2.PNG",
             "ITEM_3": "./image/ITEM-3.PNG",
@@ -42,8 +38,10 @@
             "ITEM_5": "./image/ITEM-5.PNG"
         };
 
-        // Function to add markers
+        // Function to add markers to the map
         function addMarkers(data) {
+            const bounds = L.latLngBounds(); // Create a bounds object
+
             for (const [key, coordinates] of Object.entries(data.geoinfo)) {
                 const iconUrl = iconMap[key] || "";
                 if (iconUrl) {
@@ -51,15 +49,43 @@
                         iconUrl: iconUrl,
                         iconSize: [38, 38] // Adjust size as needed
                     });
-                    L.marker(coordinates, { icon: customIcon }).addTo(map)
-                      .bindPopup(key);
+
+                    const marker = L.marker(coordinates, { icon: customIcon }).addTo(map)
+                        .bindPopup(key);
+                    
+                    bounds.extend(marker.getLatLng()); // Extend the bounds to include the marker
                 }
             }
+
+            // Fit the map to the bounds of the markers
+            map.fitBounds(bounds);
         }
 
-        // Get data and add markers
+        // Get data and set up the tile layer
         const data = getDataFromUrl();
+        let tileURL;
+
+        // Determine the tile URL based on the data
         if (data) {
+            switch(data.tile) {
+                case "LABELED":
+                    tileURL = `https://tile.openstreetmap.org/{z}/{x}/{y}.png`;
+                    break;
+                case "SATELLITE":
+                    tileURL = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`;
+                    break;
+                default:
+					tileURL = `https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png`;
+                    break;
+            }
+
+            // Set up the tile layer
+            L.tileLayer(tileURL, {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add markers to the map
             addMarkers(data);
         }
     </script>
